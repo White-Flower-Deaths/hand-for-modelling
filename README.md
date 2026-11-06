@@ -1,4 +1,4 @@
-# Form — Motion Studio
+# Form — Viks
 
 A small browser app for bringing a 3D model into a live webcam view and moving it with hand gestures. Model files and camera frames are handled locally in the browser.
 
