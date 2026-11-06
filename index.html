@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0e12" />
+    <meta name="description" content="A private, browser-based 3D motion studio controlled with your hands." />
+    <title>Form — Motion Studio</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./src/app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Form Motion Studio home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand-name">form<span>.</span></span>
+          <span class="brand-divider"></span>
+          <span class="brand-context">MOTION STUDIO</span>
+        </a>
+        <div class="topbar-center"><span class="live-dot"></span><span id="topStatus">Studio ready</span></div>
+        <div class="topbar-actions">
+          <button class="icon-button" id="helpButton" type="button" title="Show gesture guide" aria-label="Show gesture guide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.4 2.4 0 1 1 4.1 1.7c-1.1 1-1.8 1.4-1.8 2.8M12 17h.01"></path></svg>
+          </button>
+          <button class="button button-primary" id="cameraButton" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path></svg>
+            <span>Enable camera</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <section class="panel-section model-section">
+            <div class="section-heading">
+              <div><span class="eyebrow">YOUR CANVAS</span><h1>Bring a model<br />to life.</h1></div>
+              <span class="step-number">01</span>
+            </div>
+            <p class="section-copy">Drop in a 3D model, then shape it in the air with your hands.</p>
+            <input id="modelInput" type="file" accept=".glb,.gltf,.obj,.mtl,.stl,.bin,.png,.jpg,.jpeg,.webp" multiple hidden />
+            <button class="dropzone" id="browseButton" type="button">
+              <span class="upload-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"></path><path d="M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"></path></svg></span>
+              <span class="drop-title">Choose a 3D file</span>
+              <span class="drop-hint">or drag it here · up to 100 MB</span>
+              <span class="file-types">GLB · GLTF · OBJ · STL</span>
+            </button>
+            <div class="model-info" id="modelInfo">
+              <span class="model-thumb"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="m20 4 13 7.5v16L20 35l-13-7.5v-16L20 4Z"></path><path d="m7 11.5 13 8 13-8M20 20v15M13 7.8l13 8"></path></svg></span>
+              <span class="model-meta"><strong id="modelName">No model loaded</strong><small id="modelDetails">Try the sample object below</small></span>
+              <button class="text-button" id="removeModelButton" type="button" aria-label="Remove model" title="Remove model">×</button>
+            </div>
+            <button class="sample-button" id="sampleButton" type="button"><span aria-hidden="true">✦</span> Load sample object</button>
+            <p class="file-note">For a <code>.gltf</code> with textures or buffers, select all related files together. GLB is the easiest format.</p>
+          </section>
+
+          <section class="panel-section gesture-section">
+            <div class="section-heading compact">
+              <div><span class="eyebrow">MOTION CONTROL</span><h2>Move with your hands</h2></div>
+              <label class="switch" title="Toggle hand motion control"><input id="motionToggle" type="checkbox" checked /><span></span></label>
+            </div>
+            <div class="gesture-list">
+              <div class="gesture-row"><span class="gesture-symbol palm-symbol">✋</span><span class="gesture-copy"><strong>Open hand</strong><small>Move the model</small></span><span class="gesture-key">MOVE</span></div>
+              <div class="gesture-row"><span class="gesture-symbol">🤏</span><span class="gesture-copy"><strong>One-hand pinch</strong><small>Auto-rotate clockwise</small></span><span class="gesture-key">SPIN</span></div>
+              <div class="gesture-row"><span class="gesture-symbol pinch-symbol" aria-hidden="true">🤏</span><span class="gesture-copy"><strong>Both hands pinched</strong><small>Auto-rotate anticlockwise</small></span><span class="gesture-key">SPIN</span></div>
+              <div class="gesture-row"><span class="gesture-symbol two-hand-symbol">↔</span><span class="gesture-copy"><strong>Two hands</strong><small>Turn, tilt, move or resize</small></span><span class="gesture-key">ROTATE</span></div>
+              <div class="gesture-row"><span class="gesture-symbol">✊</span><span class="gesture-copy"><strong>Fist</strong><small>Lock the model</small></span><span class="gesture-key">LOCK</span></div>
+            </div>
+            <div class="tracking-card" id="trackingCard">
+              <span class="tracking-orb" id="trackingOrb"></span>
+              <span><strong id="trackingStatus">Camera is off</strong><small id="trackingHint">Enable the camera to start</small></span>
+              <span class="hand-count" id="handCount">0</span>
+            </div>
+          </section>
+
+          <section class="panel-section transform-section">
+            <div class="section-heading compact"><div><span class="eyebrow">FINE TUNE</span><h2>Object transform</h2></div><div class="transform-actions"><button class="spin-button" id="spinButton" type="button" aria-pressed="false" disabled>Spin</button><button class="reset-button" id="resetButton" type="button">Reset</button></div></div>
+            <label class="slider-control"><span>Size <output id="scaleOutput">100%</output></span><input id="scaleSlider" type="range" min="30" max="500" value="100" /></label>
+            <label class="zoom-limit-control"><span>Maximum zoom limit</span>
+              <select id="zoomLimitSelect" class="camera-select zoom-limit-select" aria-label="Maximum zoom limit">
+                <option value="100">100%</option>
+                <option value="200">200%</option>
+                <option value="300">300%</option>
+                <option value="400">400%</option>
+                <option value="500" selected>500%</option>
+                <option value="600">600%</option>
+                <option value="700">700%</option>
+                <option value="800">800%</option>
+                <option value="900">900%</option>
+                <option value="1000">1000%</option>
+                <option value="1100">1100%</option>
+                <option value="1200">1200%</option>
+              </select>
+            </label>
+            <label class="slider-control"><span>Turn <output id="rotateOutput">0°</output></span><input id="rotateSlider" type="range" min="-180" max="180" value="0" /></label>
+          </section>
+
+          <footer class="sidebar-footer"><span class="privacy-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"></path></svg></span><span>Processed on your device.<br /><button type="button" class="privacy-link" id="privacyButton">Privacy details</button></span><span class="footer-spacer"></span><span class="version-label">v1.0</span></footer>
+        </aside>
+
+        <section class="studio" aria-label="Live camera and 3D model stage">
+          <div class="stage-toolbar">
+            <div class="stage-label"><span class="stage-mark">✳</span><span id="stageModelTitle">Untitled scene</span><span class="scene-separator">/</span><span class="muted-label">LIVE VIEW</span></div>
+            <div class="stage-tools">
+              <label class="tool-toggle"><input id="landmarksToggle" type="checkbox" checked /><span class="toggle-track"></span><span>Hand points</span></label>
+              <select id="cameraSelect" class="camera-select" aria-label="Select camera" hidden><option value="">Default camera</option></select>
+              <button class="small-tool" id="fullscreenButton" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"></path></svg></button>
+            </div>
+          </div>
+
+          <div class="stage" id="stage">
+            <video id="webcam" playsinline muted></video>
+            <div class="stage-grain"></div>
+            <div class="camera-placeholder" id="cameraPlaceholder">
+              <div class="placeholder-orbit orbit-one"></div><div class="placeholder-orbit orbit-two"></div>
+              <div class="placeholder-content"><span class="placeholder-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="12" width="26" height="24" rx="4"></rect><path d="m31 20 12-7v22l-12-7z"></path><circle cx="18" cy="24" r="5"></circle></svg></span><span class="eyebrow">YOUR LIVE STAGE</span><h2>Make space<br />for something.</h2><p>Turn on your camera to see the room around you.<br />Your model will appear right in the frame.</p><button class="button button-outline" id="placeholderCameraButton" type="button">Enable camera <span>↗</span></button><span class="placeholder-footnote">Camera access stays on this device</span></div>
+              <div class="corner-label corner-top">FORM / 01</div><div class="corner-label corner-bottom">MOTION CAPTURE</div>
+            </div>
+            <div id="rendererHost" class="renderer-host"></div>
+            <canvas id="handCanvas" class="hand-canvas"></canvas>
+            <div class="stage-vignette"></div>
+            <div class="stage-hud hud-top-left"><span class="hud-dot" id="hudDot"></span><span id="hudText">WAITING FOR CAMERA</span></div>
+            <div class="stage-hud hud-top-right" id="fpsBadge">— FPS</div>
+            <div class="gesture-toast" id="gestureToast"><span class="toast-icon" id="toastIcon">✋</span><span><strong id="toastTitle">Ready when you are</strong><small id="toastDetail">Open hand to move, pinch to auto-rotate</small></span></div>
+            <div class="stage-hint" id="stageHint"><span>✦</span> Drag to rotate, Shift-drag to move, scroll to resize</div>
+          </div>
+
+          <div class="bottom-bar">
+            <div class="camera-state"><span class="camera-state-light" id="cameraStateLight"></span><span id="cameraStateText">Camera not connected</span></div>
+            <div class="bottom-center"><span class="tip-mark">✦</span><span id="bottomTip">Open hand moves, one-hand pinch spins clockwise, both hands rotate and resize.</span></div>
+            <button class="button button-quiet" id="stopCameraButton" type="button" disabled><span class="stop-icon"></span> Stop camera</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="infoDialog" class="info-dialog">
+      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+      <span class="eyebrow" id="dialogEyebrow">ABOUT THE CAMERA</span><h2 id="dialogTitle">Your motion stays yours.</h2><div id="dialogBody"></div>
+      <div class="dialog-actions" id="dialogActions" hidden><button class="button button-quiet" id="cancelCameraButton" type="button">Not now</button><button class="button button-primary" id="continueCameraButton" type="button">Continue & enable camera</button></div>
+    </dialog>
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  </body>
+</html>
